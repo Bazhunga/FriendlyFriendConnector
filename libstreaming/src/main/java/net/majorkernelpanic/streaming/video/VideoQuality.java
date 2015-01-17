@@ -33,13 +33,17 @@ import android.util.Log;
  */
 public class VideoQuality {
 
-	public final static String TAG = "VideoQuality";
+	// Tag
+	private final static String TAG = "VideoQuality";
 	
-	/** Default video stream quality. */
+	// Default video stream quality.
 	public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(176,144,20,500000);
 
-	/**	Represents a quality for a video stream. */ 
-	public VideoQuality() {}
+	public int framerate = 0;
+	public int bitrate = 0;
+	public int resX = 0;
+	public int resY = 0;
+
 
 	/**
 	 * Represents a quality for a video stream.
@@ -49,7 +53,22 @@ public class VideoQuality {
 	public VideoQuality(int resX, int resY) {
 		this.resX = resX;
 		this.resY = resY;
-	}	
+		this.bitrate = DEFAULT_VIDEO_QUALITY.bitrate;
+		this.framerate = DEFAULT_VIDEO_QUALITY.framerate;
+	}
+	
+	/**
+	 * Represents a quality for a video stream.
+	 * @param resX The horizontal resolution
+	 * @param resY The vertical resolution
+	 * @param framerate The framerate in frame per seconds
+	 */
+	public VideoQuality(int resX, int resY, int framerate) {
+		this.framerate = framerate;
+		this.bitrate = DEFAULT_VIDEO_QUALITY.bitrate;
+		this.resX = resX;
+		this.resY = resY;
+	}
 
 	/**
 	 * Represents a quality for a video stream.
@@ -64,11 +83,6 @@ public class VideoQuality {
 		this.resX = resX;
 		this.resY = resY;
 	}
-
-	public int framerate = 0;
-	public int bitrate = 0;
-	public int resX = 0;
-	public int resY = 0;
 
 	public boolean equals(VideoQuality quality) {
 		if (quality==null) return false;
@@ -105,11 +119,10 @@ public class VideoQuality {
 	 * Checks if the requested resolution is supported by the camera.
 	 * If not, it modifies it by supported parameters. 
 	 **/
-	public static VideoQuality determineClosestSupportedResolution(Camera.Parameters parameters, VideoQuality quality) {
+	public static VideoQuality determineClosestSupportedResolution(List<Size> supportedSizes, VideoQuality quality) {
 		VideoQuality v = quality.clone();
 		int minDist = Integer.MAX_VALUE;
 		String supportedSizesStr = "Supported resolutions: ";
-		List<Size> supportedSizes = parameters.getSupportedPreviewSizes();
 		for (Iterator<Size> it = supportedSizes.iterator(); it.hasNext();) {
 			Size size = it.next();
 			supportedSizesStr += size.width+"x"+size.height+(it.hasNext()?", ":"");
@@ -126,6 +139,12 @@ public class VideoQuality {
 		}
 		
 		return v;
+	}
+	
+	public static VideoQuality getHighestQuality(Camera.Parameters parameters) {
+		List<Size> supportedSizes = parameters.getSupportedPreviewSizes();
+		Size highestQuality = supportedSizes.get(0);
+		return new VideoQuality(highestQuality.width, highestQuality.height);
 	}
 
 	public static int[] determineMaximumSupportedFramerate(Camera.Parameters parameters) {
